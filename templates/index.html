@@ -1,0 +1,317 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SSH/SCP Configuration Tool</title>
+    <link rel="stylesheet" href="/static/css/style.css">
+</head>
+<body>
+<div class="container">
+    <header>
+        <h1>Push configuration using SSH/SCP</h1>
+        <div class="header-buttons">
+            <button id="sendBtn" class="btn save-btn">Send Commands</button>
+            <button type="button" class="btn clear-all-btn" onclick="resetAll()">Reset All</button>
+        </div>
+    </header>
+
+    <main>
+        <div class="section">
+            <form id="configForm" class="filter-form">
+                <div class="filter-column">
+                    <div class="form-group">
+                        <label for="username">Username:</label>
+                        <input type="text" id="username" name="username" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="password">Password:</label>
+                        <input type="password" id="password" name="password" required>
+                    </div>
+                </div>
+            </form>
+        </div>
+        <div id="configurationStatus" class="status-message"></div>
+
+        <div class="section">
+            <div class="filter-bar">
+                <form id="destinationForm" enctype="multipart/form-data" class="filter-form">
+                    <div class="filter-row">
+                        <div class="form-group">
+                            <label for="destinationFile">Import Destination List (JSON):</label>
+                            <div style="display: flex; gap: 10px; align-items: center;">
+                                <input type="file" id="destinationFile" name="destinationFile" accept=".json">
+                                <button type="submit" class="btn add-btn">Upload File</button>
+                            </div>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+        <div id="destinationStatus" class="status-message"></div>
+
+        <div class="section">
+            <form id="commandForm" class="filter-form">
+                <div class="filter-column">
+                    <div class="form-group">
+                        <label for="targetDir">SCP Target Directory:</label>
+                        <input type="text" id="targetDir" name="targetDir" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="command">SSH Command to Execute:</label>
+                        <textarea id="command" name="command" rows="5"></textarea>
+                    </div>
+                </div>
+            </form>
+        </div>
+
+        <div class="section">
+            <div class="filter-bar">
+                <form id="fileForm" enctype="multipart/form-data" class="filter-form">
+                    <div class="filter-row">
+                        <div class="form-group">
+                            <label for="uploadFile">Select File to Upload to the Hosts:</label>
+                            <div style="display: flex; gap: 10px; align-items: center;">
+                                <input type="file" id="uploadFile" name="uploadFile">
+                                <button type="submit" class="btn add-btn">Upload File</button>
+                            </div>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+        <div id="fileStatus" class="status-message"></div>
+
+
+        <div class="section">
+            <table class="users-table">
+                <thead>
+                <tr>
+                    <th>Host</th>
+                    <th>Port</th>
+                    <th></th>
+                    <th></th>
+                </tr>
+                </thead>
+                <tbody id="destinationTableBody">
+                <tr>
+                    <td colspan="3" class="no-users">No destinations loaded. Import a JSON file with a destination list.
+                    </td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Progress Section -->
+        <div id="progressSection" class="hidden">
+            <h2 class="section-title">Progress</h2>
+            <div class="section">
+                <table class="users-table">
+                    <thead>
+                    <tr>
+                        <th>Host</th>
+                        <th>Operation</th>
+                        <th>Status</th>
+                        <th>Output</th>
+                    </tr>
+                    </thead>
+                    <tbody id="progressTableBody">
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </main>
+
+    <footer>
+        <p>Send configuration to the various devices using SSH/SCP</p>
+    </footer>
+</div>
+
+<script>
+    let ws;
+    let destinations = [];
+    let uploadedFile = '';
+
+    function connectWebSocket() {
+        ws = new WebSocket('ws://localhost:8080/ws');
+
+        ws.onmessage = function (event) {
+            const data = JSON.parse(event.data);
+            updateProgress(data);
+        };
+
+        ws.onclose = function () {
+            setTimeout(connectWebSocket, 1000);
+        };
+    }
+
+    function updateProgress(data) {
+        const progressSection = document.getElementById('progressSection');
+        const progressTableBody = document.getElementById('progressTableBody');
+
+        progressSection.classList.remove('hidden');
+
+        const row = document.createElement('tr');
+        let statusClass = data.success ? 'success' : (data.error ? 'error' : '');
+
+        row.innerHTML = `
+                <td>${data.host}</td>
+                <td><span class="status-badge ${data.type}">${data.type.toUpperCase()}</span></td>
+                <td><span class="status-badge ${statusClass}">${data.status}</span></td>
+                <td class="comment-cell">${data.output || data.error || '-'}</td>
+            `;
+
+        progressTableBody.appendChild(row);
+    }
+
+    function updateDestinationList() {
+        const tableBody = document.getElementById('destinationTableBody');
+        if (destinations.length === 0) {
+            tableBody.innerHTML = '<tr><td colspan="3" class="no-users">No destinations loaded. Import a JSON file with destination list.</td></tr>';
+        } else {
+            tableBody.innerHTML = destinations.map(d =>
+                `<tr>
+                        <td>${d.address}</td>
+                        <td>${d.port}</td>
+                        <td></td>
+                        <td></td>
+                    </tr>`
+            ).join('');
+        }
+    }
+
+    function showDestinationSuccessMessage(message) {
+        const destinationStatus = document.getElementById('destinationStatus');
+        destinationStatus.innerHTML = `<div class="success-message">${message}</div>`;
+    }
+
+    function showDestinationErrorMessage(message) {
+        const destinationStatus = document.getElementById('destinationStatus');
+        destinationStatus.innerHTML = `<div class="error-message">${message}</div>`;
+    }
+
+    function showConfigurationErrorMessage(message) {
+        const configurationStatus = document.getElementById('configurationStatus');
+        configurationStatus.innerHTML = `<div class="error-message">${message}</div>`;
+    }
+
+    function showFileSuccessMessage(message) {
+        const fileStatus = document.getElementById('fileStatus');
+        fileStatus.innerHTML = `<div class="success-message">${message}</div>`;
+    }
+
+    function showFileErrorMessage(message) {
+        const fileStatus = document.getElementById('fileStatus');
+        fileStatus.innerHTML = `<div class="error-message">${message}</div>`;
+    }
+
+    function resetAll() {
+        fetch('/reset', {method: 'POST'});
+        destinations = [];
+        uploadedFile = '';
+        updateDestinationList();
+        document.getElementById('configForm').reset();
+        document.getElementById('commandForm').reset();
+        document.getElementById('destinationStatus').innerHTML = '';
+        document.getElementById('fileStatus').innerHTML = '';
+        document.getElementById('progressSection').classList.add('hidden');
+        document.getElementById('progressTableBody').innerHTML = '';
+    }
+
+    // Event Listeners
+    document.getElementById('destinationForm').addEventListener('submit', function (e) {
+        e.preventDefault();
+        const formData = new FormData();
+        const fileInput = document.getElementById('destinationFile');
+
+        if (!fileInput.files[0]) {
+            showDestinationErrorMessage('Please select a destination file');
+            return;
+        }
+
+        formData.append('destinationFile', fileInput.files[0]);
+
+        fetch('/upload-destinations', {
+            method: 'POST',
+            body: formData
+        })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    destinations = data.destinations;
+                    updateDestinationList();
+                    showDestinationSuccessMessage(`Successfully imported ${destinations.length} destinations`);
+                    fileInput.value = '';
+                } else {
+                    showDestinationErrorMessage('Error: ' + data.error);
+                }
+            })
+            .catch(error => {
+                showDestinationErrorMessage('Network error: ' + error.message);
+            });
+    });
+
+    document.getElementById('fileForm').addEventListener('submit', function (e) {
+        e.preventDefault();
+        const formData = new FormData();
+        const fileInput = document.getElementById('uploadFile');
+
+        if (!fileInput.files[0]) {
+            showFileErrorMessage('Please select a file to upload');
+            return;
+        }
+
+        formData.append('uploadFile', fileInput.files[0]);
+
+        fetch('/upload-file', {
+            method: 'POST',
+            body: formData
+        })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    uploadedFile = data.filename;
+                    showFileSuccessMessage('File uploaded: ' + data.filename);
+                    fileInput.value = '';
+                } else {
+                    showFileErrorMessage('Error: ' + data.error);
+                }
+            })
+            .catch(error => {
+                showFileErrorMessage('Network error: ' + error.message);
+            });
+    });
+
+    document.getElementById('sendBtn').addEventListener('click', function () {
+        if (destinations.length === 0) {
+            showFileErrorMessage('Please import destination list first');
+            return;
+        }
+
+        const username = document.getElementById('username').value;
+        const password = document.getElementById('password').value;
+
+        if (!username || !password) {
+            showConfigurationErrorMessage('Please enter username and password');
+            return;
+        }
+
+        const formData = new FormData();
+        formData.append('username', username);
+        formData.append('password', password);
+        formData.append('targetDir', document.getElementById('targetDir').value);
+        formData.append('command', document.getElementById('command').value);
+
+        document.getElementById('progressTableBody').innerHTML = '';
+
+        fetch('/execute', {
+            method: 'POST',
+            body: formData
+        });
+    });
+
+    // Initialize WebSocket connection
+    connectWebSocket();
+</script>
+</body>
+</html>

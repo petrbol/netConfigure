@@ -1,0 +1,545 @@
+/* Base styles */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    line-height: 1.5;
+    color: #333;
+    background-color: #f5f5f5;
+    font-size: 14.5px;
+}
+
+.container {
+    width: 98%;
+    margin: 0 auto;
+    padding: 15px;
+}
+
+/* Header */
+header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+    padding-bottom: 15px;
+    border-bottom: 1px solid #ddd;
+}
+
+header h1 {
+    color: #2c3e50;
+    font-size: 23px;
+}
+
+.header-buttons {
+    display: flex;
+    gap: 5px;
+    align-items: center;
+}
+
+/* Section titles */
+.section-title {
+    color: #2c3e50;
+    font-size: 18px;
+    margin: 25px 0 15px 0;
+    border-bottom: 1px solid #eee;
+    padding-bottom: 8px;
+}
+
+/* Sections */
+.section {
+    background-color: white;
+    border-radius: 5px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    margin-bottom: 20px;
+    overflow: hidden;
+}
+
+/* Buttons */
+.btn {
+    display: inline-block;
+    padding: 6px 12px;
+    background-color: #3498db;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    text-decoration: none;
+    font-size: 13.5px;
+    transition: background-color 0.3s;
+    height: 30px;
+    line-height: 18px;
+    box-sizing: border-box;
+    vertical-align: middle;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+.btn:hover {
+    background-color: #2980b9;
+}
+
+.add-btn {
+    background-color: #2ecc71;
+}
+
+.add-btn:hover {
+    background-color: #27ae60;
+}
+
+.save-btn {
+    background-color: #2ecc71;
+    padding: 8px 16px;
+}
+
+.save-btn:hover {
+    background-color: #27ae60;
+}
+
+.cancel-btn {
+    background-color: #95a5a6;
+    padding: 8px 16px;
+}
+
+.cancel-btn:hover {
+    background-color: #7f8c8d;
+}
+
+.delete-btn {
+    background-color: #e74c3c;
+}
+
+.delete-btn:hover {
+    background-color: #c0392b;
+}
+
+.clear-all-btn {
+    background-color: #e74c3c;
+}
+
+.clear-all-btn:hover {
+    background-color: #c0392b;
+}
+
+/* Tables */
+.users-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 0;
+    background-color: white;
+    font-size: 13.5px;
+    border-radius: 4px;
+}
+
+.users-table thead tr:first-child th:first-child {
+    border-top-left-radius: 4px;
+}
+
+.users-table thead tr:first-child th:last-child {
+    border-top-right-radius: 4px;
+}
+
+.users-table tbody tr:last-child td:first-child {
+    border-bottom-left-radius: 4px;
+}
+
+.users-table tbody tr:last-child td:last-child {
+    border-bottom-right-radius: 4px;
+}
+
+.users-table th,
+.users-table td {
+    padding: 8px 10px;
+    text-align: left;
+    border-bottom: 1px solid #ddd;
+}
+
+.users-table th {
+    background-color: #34495e;
+    color: white;
+    font-weight: bold;
+}
+
+.users-table tr:hover {
+    background-color: #f9f9f9;
+}
+
+.users-table .no-users {
+    text-align: center;
+    padding: 30px;
+    font-style: italic;
+    color: #777;
+}
+
+.comment-cell {
+    max-width: 200px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.comment-cell:hover {
+    white-space: normal;
+    overflow: visible;
+    position: relative;
+    z-index: 1;
+    background-color: #f9f9f9;
+    box-shadow: 0 0 10px rgba(0,0,0,0.1);
+    padding: 5px;
+    border-radius: 3px;
+}
+
+/* Forms */
+.user-form {
+    background-color: white;
+    padding: 20px;
+    border-radius: 5px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.form-group {
+    margin-bottom: 15px;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 4px;
+    font-weight: bold;
+    color: #2c3e50;
+    font-size: 13.5px;
+}
+
+.form-group input[type="text"],
+.form-group input[type="number"],
+.form-group input[type="password"],
+.form-group input[type="file"],
+.form-group textarea,
+.form-group select {
+    width: 100%;
+    padding: 8px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    font-size: 13.5px;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    color: #333;
+    background-color: #fff;
+}
+
+.form-group textarea {
+    resize: vertical;
+    min-height: 70px;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+.form-group input:focus,
+.form-group textarea:focus,
+.form-group select:focus {
+    outline: none;
+    border-color: #3498db;
+    box-shadow: 0 0 5px rgba(52, 152, 219, 0.3);
+}
+
+/* Filter Bar */
+.filter-bar {
+    margin-bottom: 0;
+    padding: 15px;
+    background-color: #f5f5f5;
+    border-radius: 5px 5px 0 0;
+    border-bottom: 1px solid #ddd;
+}
+
+.filter-form {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+.filter-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 15px;
+    align-items: flex-start;
+}
+
+.filter-row.four-column {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 15px;
+}
+
+.filter-column {
+    flex: 1;
+    min-width: 220px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    padding: 10px;
+    background-color: #f5f5f5;
+    border-radius: 5px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.filter-form .form-group {
+    margin-bottom: 0;
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    align-items: flex-start;
+}
+
+.filter-form label {
+    margin-bottom: 4px;
+    font-weight: bold;
+    color: #555;
+    font-size: 13px;
+    text-align: left;
+    width: 100%;
+}
+
+.filter-form input[type="text"],
+.filter-form input[type="file"],
+.filter-form select {
+    width: 100%;
+    padding: 8px;
+    border-radius: 4px;
+    border: 1px solid #ddd;
+    font-size: 13px;
+    background-color: #fff;
+    text-align: left;
+}
+
+.action-buttons {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    flex-wrap: wrap;
+}
+
+/* Status badges */
+.status-badge {
+    padding: 4px 8px;
+    border-radius: 3px;
+    font-size: 12px;
+    font-weight: bold;
+    text-transform: uppercase;
+}
+
+.status-badge.success {
+    background-color: #d4edda;
+    color: #155724;
+}
+
+.status-badge.error {
+    background-color: #f8d7da;
+    color: #721c24;
+}
+
+.status-badge.scp {
+    background-color: #e3f2fd;
+    color: #0d47a1;
+}
+
+.status-badge.ssh {
+    background-color: #f3e5f5;
+    color: #4a148c;
+}
+
+/* Status messages */
+.status-message {
+    margin-top: 10px;
+}
+
+.success-message {
+    background-color: #e8f5e9;
+    border-left: 4px solid #4caf50;
+    padding: 12px 15px;
+    margin: 15px 0;
+    color: #2e7d32;
+    font-size: 13.5px;
+    border-radius: 4px;
+}
+
+.error-message {
+    background-color: #f8d7da;
+    color: #721c24;
+    padding: 12px 15px;
+    margin: 15px 0;
+    border: 1px solid #f5c6cb;
+    border-radius: 4px;
+    font-weight: 500;
+    border-left: 4px solid #f44336;
+}
+
+/* Utility Classes */
+.hidden {
+    display: none;
+}
+
+.inline {
+    display: inline-block;
+    margin-right: 5px;
+    vertical-align: middle;
+}
+
+/* Footer */
+footer {
+    margin-top: 40px;
+    padding-top: 15px;
+    border-top: 1px solid #ddd;
+    text-align: center;
+    color: #7f8c8d;
+    font-size: 12.5px;
+}
+
+/* Responsive adjustments */
+@media (max-width: 1200px) {
+    .filter-row.four-column {
+        flex-wrap: wrap;
+    }
+
+    .filter-column {
+        min-width: 200px;
+        flex: 1 1 40%;
+    }
+}
+
+@media (max-width: 768px) {
+    .container {
+        width: 100%;
+        padding: 10px;
+    }
+
+    header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 10px;
+    }
+
+    .header-buttons {
+        width: 100%;
+        justify-content: space-between;
+    }
+
+    .filter-row.four-column {
+        flex-direction: column;
+    }
+
+    .filter-column {
+        width: 100%;
+        min-width: 100%;
+    }
+
+    .action-buttons {
+        flex-direction: column;
+        width: 100%;
+    }
+
+    .action-buttons .btn {
+        width: 100%;
+        margin-bottom: 5px;
+    }
+
+    .users-table {
+        font-size: 12px;
+    }
+
+    .users-table th,
+    .users-table td {
+        padding: 6px 8px;
+    }
+
+    .comment-cell {
+        max-width: 120px;
+    }
+}
+
+/* Additional spacing and visual improvements */
+.section + .section {
+    margin-top: 0;
+}
+
+main {
+    margin-bottom: 30px;
+}
+
+/* Progress table specific styling */
+#progressSection .users-table {
+    margin-top: 0;
+}
+
+#progressSection .section {
+    margin-top: 0;
+}
+
+/* File input styling improvements */
+.form-group input[type="file"] {
+    padding: 6px 8px;
+    background-color: #fff;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+}
+
+.form-group input[type="file"]::-webkit-file-upload-button {
+    background-color: #95a5a6;
+    color: white;
+    border: none;
+    padding: 6px 12px;
+    border-radius: 3px;
+    margin-right: 10px;
+    cursor: pointer;
+    font-size: 13px;
+}
+
+.form-group input[type="file"]::-webkit-file-upload-button:hover {
+    background-color: #7f8c8d;
+}
+
+/* Form row improvements */
+.filter-row .form-group {
+    display: flex;
+    align-items: start;
+    gap: 10px;
+}
+
+.filter-row .form-group label {
+    white-space: nowrap;
+    margin-bottom: 0;
+    min-width: auto;
+}
+
+.filter-row .form-group input,
+.filter-row .form-group select {
+    flex: 1;
+}
+
+/* Button group improvements */
+.filter-row .action-buttons .btn {
+    white-space: nowrap;
+}
+
+/* Column-specific alignment and width for the destinations table */
+.users-table th:nth-child(1),
+.users-table td:nth-child(1) {
+    text-align: left;
+    width: 20%;
+}
+
+.users-table th:nth-child(2),
+.users-table td:nth-child(2) {
+    text-align: left;
+    width: 10%;
+}
+
+.users-table th:nth-child(3),
+.users-table td:nth-child(3) {
+    text-align: left;
+    width: 20%;
+}
+
+.users-table th:nth-child(4),
+.users-table td:nth-child(4) {
+    text-align: left;
+    width: 50%;
+}
