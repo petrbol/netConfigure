@@ -13,16 +13,10 @@ import (
 	"os/exec"
 	"path/filepath"
 	"strconv"
+	"sync"
 )
 
 // Destination represents a target host
-type DestinationOLD struct {
-	Host struct {
-		Address string `json:"address"`
-		Port    int    `json:"port"`
-	} `json:"host"`
-}
-
 type Destination struct {
 	Address string `json:"address"`
 	Port    int    `json:"port"`
@@ -38,12 +32,25 @@ type TaskResult struct {
 
 // ProgressUpdate represents a progress update
 type ProgressUpdate struct {
-	Type    string `json:"type"` // "scp" or "ssh"
+	Type    string `json:"type"` // "scp", "ssh", or "completion"
 	Host    string `json:"host"`
 	Status  string `json:"status"`
 	Output  string `json:"output"`
 	Error   string `json:"error"`
 	Success bool   `json:"success"`
+}
+
+// CompletionSummary represents the final completion status
+type CompletionSummary struct {
+	Type             string `json:"type"` // "completion"
+	TotalHosts       int    `json:"total_hosts"`
+	SuccessfulSCP    int    `json:"successful_scp"`
+	FailedSCP        int    `json:"failed_scp"`
+	SuccessfulSSH    int    `json:"successful_ssh"`
+	FailedSSH        int    `json:"failed_ssh"`
+	Status           string `json:"status"`
+	AllOperations    int    `json:"all_operations"`
+	FailedOperations int    `json:"failed_operations"`
 }
 
 var upgrader = websocket.Upgrader{
@@ -90,6 +97,11 @@ func homeHandler(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Template not found", http.StatusInternalServerError)
 		return
 	}
+
+	// Reset everything
+	destinations = []Destination{}
+	uploadedFileName = ""
+	uploadedFilePath = ""
 
 	// Clean up uploads directory
 	os.RemoveAll("uploads")
@@ -171,6 +183,7 @@ func uploadFileHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 var wsConnections []*websocket.Conn
+var connMutex sync.Mutex
 
 func websocketHandler(w http.ResponseWriter, r *http.Request) {
 	conn, err := upgrader.Upgrade(w, r, nil)
@@ -178,9 +191,22 @@ func websocketHandler(w http.ResponseWriter, r *http.Request) {
 		log.Println("WebSocket upgrade error:", err)
 		return
 	}
-	defer conn.Close()
+	defer func() {
+		conn.Close()
+		// Remove connection from slice when it closes
+		connMutex.Lock()
+		for i, c := range wsConnections {
+			if c == conn {
+				wsConnections = append(wsConnections[:i], wsConnections[i+1:]...)
+				break
+			}
+		}
+		connMutex.Unlock()
+	}()
 
+	connMutex.Lock()
 	wsConnections = append(wsConnections, conn)
+	connMutex.Unlock()
 
 	// Keep the connection alive
 	for {
@@ -194,12 +220,37 @@ func websocketHandler(w http.ResponseWriter, r *http.Request) {
 func broadcastProgress(update ProgressUpdate) {
 	message, _ := json.Marshal(update)
 
-	for i, conn := range wsConnections {
+	connMutex.Lock()
+	defer connMutex.Unlock()
+
+	activeConnections := []*websocket.Conn{}
+	for _, conn := range wsConnections {
 		if err := conn.WriteMessage(websocket.TextMessage, message); err != nil {
-			// Remove dead connection
-			wsConnections = append(wsConnections[:i], wsConnections[i+1:]...)
+			// Connection is dead, don't add to active list
+			conn.Close()
+		} else {
+			activeConnections = append(activeConnections, conn)
 		}
 	}
+	wsConnections = activeConnections
+}
+
+func broadcastCompletion(summary CompletionSummary) {
+	message, _ := json.Marshal(summary)
+
+	connMutex.Lock()
+	defer connMutex.Unlock()
+
+	activeConnections := []*websocket.Conn{}
+	for _, conn := range wsConnections {
+		if err := conn.WriteMessage(websocket.TextMessage, message); err != nil {
+			// Connection is dead, don't add to active list
+			conn.Close()
+		} else {
+			activeConnections = append(activeConnections, conn)
+		}
+	}
+	wsConnections = activeConnections
 }
 
 func executeHandler(w http.ResponseWriter, r *http.Request) {
@@ -213,88 +264,156 @@ func executeHandler(w http.ResponseWriter, r *http.Request) {
 
 	// Execute tasks asynchronously
 	go func() {
-		for _, dest := range destinations {
-			if uploadedFilePath != "" {
-				// SCP file transfer
-				broadcastProgress(ProgressUpdate{
-					Type:   "scp",
-					Host:   dest.Address,
-					Status: "Starting file transfer...",
-				})
+		var wg sync.WaitGroup
+		var mu sync.Mutex
 
-				scpCmd := exec.Command("sshpass", "-p", password, "scp",
-					"-P", strconv.Itoa(dest.Port),
-					"-o", "StrictHostKeyChecking=no",
-					"-O", //legacy mode
-					uploadedFilePath,
-					fmt.Sprintf("%s@%s:%s/", username, dest.Address, targetDir))
+		// Counters for completion summary
+		totalHosts := len(destinations)
+		successfulSCP := 0
+		failedSCP := 0
+		successfulSSH := 0
+		failedSSH := 0
 
-				scpOutput, scpErr := scpCmd.CombinedOutput()
+		hasFileToUpload := uploadedFilePath != ""
+		hasCommandToExecute := command != ""
 
-				if scpErr != nil {
-					broadcastProgress(ProgressUpdate{
-						Type:    "scp",
-						Host:    dest.Address,
-						Status:  "File transfer failed",
-						Error:   scpErr.Error() + "\n" + string(scpOutput),
-						Success: false,
-					})
-					continue
-				}
-
-				broadcastProgress(ProgressUpdate{
-					Type:    "scp",
-					Host:    dest.Address,
-					Status:  "File transfer completed",
-					Output:  string(scpOutput),
-					Success: true,
-				})
-			}
-
-			// SSH command execution
-			if command != "" {
-				broadcastProgress(ProgressUpdate{
-					Type:   "ssh",
-					Host:   dest.Address,
-					Status: "Executing command...",
-				})
-
-				sshCmd := exec.Command("sshpass", "-p", password, "ssh",
-					"-p", strconv.Itoa(dest.Port),
-					"-o", "StrictHostKeyChecking=no",
-					fmt.Sprintf("%s@%s", username, dest.Address),
-					command)
-
-				sshOutput, sshErr := sshCmd.CombinedOutput()
-
-				if sshErr != nil {
-					broadcastProgress(ProgressUpdate{
-						Type:    "ssh",
-						Host:    dest.Address,
-						Status:  "Command execution failed",
-						Error:   sshErr.Error() + "\n" + string(sshOutput),
-						Success: false,
-					})
-				} else {
-					broadcastProgress(ProgressUpdate{
-						Type:    "ssh",
-						Host:    dest.Address,
-						Status:  "Command executed successfully",
-						Output:  string(sshOutput),
-						Success: true,
-					})
-				}
-
-				if command == "" && uploadedFilePath == "" {
-					broadcastProgress(ProgressUpdate{
-						Type:    "ssh",
-						Host:    dest.Address,
-						Status:  "Nothing to do",
-						Success: true,
-					})
-				}
-			}
+		// Calculate total operations
+		totalOperations := 0
+		if hasFileToUpload {
+			totalOperations += totalHosts
 		}
+		if hasCommandToExecute {
+			totalOperations += totalHosts
+		}
+
+		if totalOperations == 0 {
+			// Nothing to do
+			broadcastCompletion(CompletionSummary{
+				Type:             "completion",
+				TotalHosts:       totalHosts,
+				Status:           "No operations to perform",
+				AllOperations:    0,
+				FailedOperations: 0,
+			})
+			return
+		}
+
+		for _, dest := range destinations {
+			wg.Add(1)
+			go func(destination Destination) {
+				defer wg.Done()
+
+				if hasFileToUpload {
+					// SCP file transfer
+					broadcastProgress(ProgressUpdate{
+						Type:   "scp",
+						Host:   destination.Address,
+						Status: "Starting file transfer...",
+					})
+
+					scpCmd := exec.Command("sshpass", "-p", password, "scp",
+						"-P", strconv.Itoa(destination.Port),
+						"-o", "StrictHostKeyChecking=no",
+						"-O", //legacy mode
+						uploadedFilePath,
+						fmt.Sprintf("%s@%s:%s/", username, destination.Address, targetDir))
+
+					scpOutput, scpErr := scpCmd.CombinedOutput()
+
+					mu.Lock()
+					if scpErr != nil {
+						failedSCP++
+						mu.Unlock()
+						broadcastProgress(ProgressUpdate{
+							Type:    "scp",
+							Host:    destination.Address,
+							Status:  "File transfer failed",
+							Error:   scpErr.Error() + "\n" + string(scpOutput),
+							Success: false,
+						})
+					} else {
+						successfulSCP++
+						mu.Unlock()
+						broadcastProgress(ProgressUpdate{
+							Type:    "scp",
+							Host:    destination.Address,
+							Status:  "File transfer completed",
+							Output:  string(scpOutput),
+							Success: true,
+						})
+					}
+				}
+
+				// SSH command execution
+				if hasCommandToExecute {
+					broadcastProgress(ProgressUpdate{
+						Type:   "ssh",
+						Host:   destination.Address,
+						Status: "Executing command...",
+					})
+
+					sshCmd := exec.Command("sshpass", "-p", password, "ssh",
+						"-p", strconv.Itoa(destination.Port),
+						"-o", "StrictHostKeyChecking=no",
+						fmt.Sprintf("%s@%s", username, destination.Address),
+						command)
+
+					sshOutput, sshErr := sshCmd.CombinedOutput()
+
+					mu.Lock()
+					if sshErr != nil {
+						failedSSH++
+						mu.Unlock()
+						broadcastProgress(ProgressUpdate{
+							Type:    "ssh",
+							Host:    destination.Address,
+							Status:  "Command execution failed",
+							Error:   sshErr.Error() + "\n" + string(sshOutput),
+							Success: false,
+						})
+					} else {
+						successfulSSH++
+						mu.Unlock()
+						broadcastProgress(ProgressUpdate{
+							Type:    "ssh",
+							Host:    destination.Address,
+							Status:  "Command executed successfully",
+							Output:  string(sshOutput),
+							Success: true,
+						})
+					}
+				}
+			}(dest)
+		}
+
+		// Wait for all operations to complete
+		wg.Wait()
+
+		// Calculate totals and send completion summary
+		totalFailed := failedSCP + failedSSH
+		totalSuccessful := successfulSCP + successfulSSH
+
+		var status string
+		if totalFailed == 0 {
+			status = fmt.Sprintf("All operations completed successfully! (%d/%d)", totalSuccessful, totalOperations)
+		} else if totalSuccessful == 0 {
+			status = fmt.Sprintf("All operations failed! (%d/%d)", totalFailed, totalOperations)
+		} else {
+			status = fmt.Sprintf("Operations completed with %d failures and %d successes", totalFailed, totalSuccessful)
+		}
+
+		// Send completion summary
+		broadcastCompletion(CompletionSummary{
+			Type:             "completion",
+			TotalHosts:       totalHosts,
+			SuccessfulSCP:    successfulSCP,
+			FailedSCP:        failedSCP,
+			SuccessfulSSH:    successfulSSH,
+			FailedSSH:        failedSSH,
+			Status:           status,
+			AllOperations:    totalOperations,
+			FailedOperations: totalFailed,
+		})
 	}()
 }
 

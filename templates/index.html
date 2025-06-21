@@ -5,6 +5,78 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>SSH/SCP Configuration Tool</title>
     <link rel="stylesheet" href="/static/css/style.css">
+    <style>
+        /* Completion Summary Styles */
+        .completion-message {
+            margin: 15px 0;
+        }
+
+        .completion-success {
+            background: linear-gradient(135deg, #d4edda, #c3e6cb);
+            border: 2px solid #28a745;
+            color: #155724;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(40, 167, 69, 0.2);
+        }
+
+        .completion-warning {
+            background: linear-gradient(135deg, #fff3cd, #ffeaa7);
+            border: 2px solid #ffc107;
+            color: #856404;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(255, 193, 7, 0.2);
+        }
+
+        .completion-error {
+            background: linear-gradient(135deg, #f8d7da, #f5c6cb);
+            border: 2px solid #dc3545;
+            color: #721c24;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(220, 53, 69, 0.2);
+        }
+
+        .completion-success h3,
+        .completion-warning h3,
+        .completion-error h3 {
+            margin: 0 0 10px 0;
+            font-size: 18px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .completion-details {
+            margin-top: 15px;
+            padding-top: 15px;
+            border-top: 1px solid rgba(0, 0, 0, 0.1);
+        }
+
+        .completion-details ul {
+            margin: 10px 0;
+            padding-left: 20px;
+        }
+
+        .completion-details li {
+            margin: 5px 0;
+            font-weight: 500;
+        }
+
+        .completion-details p {
+            margin: 8px 0;
+            font-weight: 500;
+        }
+
+        .completion-success em,
+        .completion-warning em,
+        .completion-error em {
+            font-style: italic;
+            opacity: 0.8;
+            font-size: 14px;
+        }
+    </style>
 </head>
 <body>
 <div class="container">
@@ -82,7 +154,7 @@
         </div>
         <div id="fileStatus" class="status-message"></div>
 
-
+        <h3 class="section-title">Destination List:</h3>
         <div class="section">
             <table class="users-table">
                 <thead>
@@ -95,7 +167,7 @@
                 </thead>
                 <tbody id="destinationTableBody">
                 <tr>
-                    <td colspan="3" class="no-users">No destinations loaded. Import a JSON file with a destination list.
+                    <td colspan="4" class="no-users">No destinations loaded. Import a JSON file with a destination list.
                     </td>
                 </tr>
                 </tbody>
@@ -104,7 +176,7 @@
 
         <!-- Progress Section -->
         <div id="progressSection" class="hidden">
-            <h2 class="section-title">Progress</h2>
+            <h3 class="section-title">Command results</h3>
             <div class="section">
                 <table class="users-table">
                     <thead>
@@ -119,6 +191,11 @@
                     </tbody>
                 </table>
             </div>
+        </div>
+
+        <!-- Completion Summary -->
+        <div id="completionSummary" class="hidden">
+                <div id="completionMessage" class="completion-message"></div>
         </div>
     </main>
 
@@ -137,7 +214,11 @@
 
         ws.onmessage = function (event) {
             const data = JSON.parse(event.data);
-            updateProgress(data);
+            if (data.type === 'completion') {
+                showCompletionSummary(data);
+            } else {
+                updateProgress(data);
+            }
         };
 
         ws.onclose = function () {
@@ -162,6 +243,57 @@
             `;
 
         progressTableBody.appendChild(row);
+    }
+
+    function showCompletionSummary(data) {
+        const completionSummary = document.getElementById('completionSummary');
+        const completionMessage = document.getElementById('completionMessage');
+
+        completionSummary.classList.remove('hidden');
+
+        // Determine the overall status class
+        let messageClass = 'completion-success';
+        if (data.failed_operations > 0) {
+            if (data.failed_operations === data.all_operations) {
+                messageClass = 'completion-error';
+            } else {
+                messageClass = 'completion-warning';
+            }
+        }
+
+        // Create detailed summary
+        let summaryDetails = '';
+        if (data.total_hosts > 0) {
+            const operations = [];
+            if (data.successful_scp > 0 || data.failed_scp > 0) {
+                operations.push(`SCP: ${data.successful_scp} successful, ${data.failed_scp} failed`);
+            }
+            if (data.successful_ssh > 0 || data.failed_ssh > 0) {
+                operations.push(`SSH: ${data.successful_ssh} successful, ${data.failed_ssh} failed`);
+            }
+
+            if (operations.length > 0) {
+                summaryDetails = `<div class="completion-details">
+                    <p><strong>Operation Summary:</strong></p>
+                    <ul>
+                        ${operations.map(op => `<li>${op}</li>`).join('')}
+                    </ul>
+                    <p><strong>Total Hosts:</strong> ${data.total_hosts}</p>
+                </div>`;
+            }
+        }
+
+        completionMessage.innerHTML = `
+            <div class="${messageClass}">
+                <h3>Execution Complete!</h3>
+                <p><strong>${data.status}</strong></p>
+                ${summaryDetails}
+                <p><em>All operations have finished processing.</em></p>
+            </div>
+        `;
+
+        // Scroll to completion summary
+        completionSummary.scrollIntoView({ behavior: 'smooth' });
     }
 
     function updateDestinationList() {
@@ -216,6 +348,8 @@
         document.getElementById('fileStatus').innerHTML = '';
         document.getElementById('progressSection').classList.add('hidden');
         document.getElementById('progressTableBody').innerHTML = '';
+        document.getElementById('completionSummary').classList.add('hidden');
+        document.getElementById('completionMessage').innerHTML = '';
     }
 
     // Event Listeners
@@ -302,7 +436,10 @@
         formData.append('targetDir', document.getElementById('targetDir').value);
         formData.append('command', document.getElementById('command').value);
 
+        // Clear previous results
         document.getElementById('progressTableBody').innerHTML = '';
+        document.getElementById('completionSummary').classList.add('hidden');
+        document.getElementById('completionMessage').innerHTML = '';
 
         fetch('/execute', {
             method: 'POST',
