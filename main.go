@@ -1,6 +1,7 @@
 package main
 
 import (
+	"embed"
 	"encoding/json"
 	"fmt"
 	"github.com/gorilla/mux"
@@ -15,6 +16,12 @@ import (
 	"strconv"
 	"sync"
 )
+
+// Embed static files into the binary
+//
+//go:embed templates/index.html
+//go:embed static/css/style.css
+var staticFiles embed.FS
 
 // Destination represents a target host
 type Destination struct {
@@ -66,8 +73,16 @@ var uploadedFilePath string
 func main() {
 	r := mux.NewRouter()
 
-	// Static files
-	r.PathPrefix("/static/").Handler(http.StripPrefix("/static/", http.FileServer(http.Dir("./static/"))))
+	// Serve embedded CSS file
+	r.HandleFunc("/static/css/style.css", func(w http.ResponseWriter, r *http.Request) {
+		cssContent, err := staticFiles.ReadFile("static/css/style.css")
+		if err != nil {
+			http.Error(w, "CSS file not found", http.StatusNotFound)
+			return
+		}
+		w.Header().Set("Content-Type", "text/css")
+		w.Write(cssContent)
+	})
 
 	// Routes
 	r.HandleFunc("/", homeHandler).Methods("GET")
@@ -77,24 +92,25 @@ func main() {
 	r.HandleFunc("/reset", resetHandler).Methods("POST")
 	r.HandleFunc("/ws", websocketHandler)
 
-	// Create the necessary directories
+	// Create only the uploads directory (no need for templates or static dirs)
 	os.MkdirAll("uploads", 0755)
-	os.MkdirAll("templates", 0755)
-	os.MkdirAll("static/css", 0755)
-	os.MkdirAll("static/js", 0755)
-	os.MkdirAll("static/images", 0755)
 
 	fmt.Println("Server starting on :8080")
-	fmt.Println("Make sure to create the following structure:")
-	fmt.Println("  templates/index.html")
-	fmt.Println("  static/css/style.css")
+	fmt.Println("Static files are embedded in the binary - no external files needed!")
 	log.Fatal(http.ListenAndServe(":8080", r))
 }
 
 func homeHandler(w http.ResponseWriter, r *http.Request) {
-	tmpl, err := template.ParseFiles("templates/index.html")
+	// Read embedded HTML template
+	htmlContent, err := staticFiles.ReadFile("templates/index.html")
 	if err != nil {
 		http.Error(w, "Template not found", http.StatusInternalServerError)
+		return
+	}
+
+	tmpl, err := template.New("index").Parse(string(htmlContent))
+	if err != nil {
+		http.Error(w, "Template parsing error", http.StatusInternalServerError)
 		return
 	}
 
