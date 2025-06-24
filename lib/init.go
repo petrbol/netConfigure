@@ -11,7 +11,7 @@ import (
 func Start() {
 	r := mux.NewRouter()
 
-	// Serve an embedded CSS file
+	// Serve an CSS file
 	r.HandleFunc("/static/css/style.css", cssHandler)
 
 	// Routes
