@@ -23,7 +23,10 @@ func Start() {
 	r.HandleFunc("/ws", websocketHandler)
 
 	// Create the uploads directory
-	os.MkdirAll("uploads", 0755)
+	err := os.MkdirAll("uploads", 0755)
+	if err != nil {
+		log.Fatal(err)
+	}
 
 	fmt.Println("Listen on:", StartFlags.ListenAddr+":"+fmt.Sprintf(StartFlags.ListenPort))
 	log.Fatal(http.ListenAndServe(StartFlags.ListenAddr+":"+fmt.Sprintf(StartFlags.ListenPort), r))
