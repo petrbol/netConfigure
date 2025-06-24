@@ -13,7 +13,7 @@ var StartFlags FlagStruct
 // FlagStruct application startup flags structure
 type FlagStruct struct {
 	ListenAddr string
-	ListenPort string
+	ListenPort int
 }
 
 // Destination target host

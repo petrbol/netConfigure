@@ -4,11 +4,13 @@ import (
 	"fmt"
 	"github.com/gorilla/mux"
 	"log"
+	"net"
 	"net/http"
 	"os"
 )
 
 func Start() {
+	validateStartupFlags()
 	r := mux.NewRouter()
 
 	// Serve an CSS file
@@ -28,6 +30,21 @@ func Start() {
 		log.Fatal(err)
 	}
 
-	fmt.Println("Listen on:", StartFlags.ListenAddr+":"+fmt.Sprintf(StartFlags.ListenPort))
-	log.Fatal(http.ListenAndServe(StartFlags.ListenAddr+":"+fmt.Sprintf(StartFlags.ListenPort), r))
+	fmt.Println("Listen on:", StartFlags.ListenAddr+":"+fmt.Sprint(StartFlags.ListenPort))
+	log.Fatal(http.ListenAndServe(StartFlags.ListenAddr+":"+fmt.Sprint(StartFlags.ListenPort), r))
+}
+
+// ValidateStartupFlags to test startup values
+func validateStartupFlags() {
+	if StartFlags.ListenPort < 1 || StartFlags.ListenPort > 65535 {
+		log.Fatal("Invalid port number")
+	}
+
+	if len(StartFlags.ListenAddr) == 0 {
+		return
+	}
+
+	if addr := net.ParseIP(StartFlags.ListenAddr); addr == nil {
+		log.Fatal("Invalid IP address")
+	}
 }

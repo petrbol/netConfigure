@@ -299,7 +299,7 @@
     function updateDestinationList() {
         const tableBody = document.getElementById('destinationTableBody');
         if (destinations.length === 0) {
-            tableBody.innerHTML = '<tr><td colspan="3" class="no-users">No destinations loaded. Import a JSON file with destination list.</td></tr>';
+            tableBody.innerHTML = '<tr><td colspan="3" class="no-users">No destinations loaded. Import a JSON file with a destination list.</td></tr>';
         } else {
             tableBody.innerHTML = destinations.map(d =>
                 `<tr>
