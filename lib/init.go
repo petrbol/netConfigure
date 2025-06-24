@@ -12,15 +12,7 @@ func Start() {
 	r := mux.NewRouter()
 
 	// Serve an embedded CSS file
-	r.HandleFunc("/static/css/style.css", func(w http.ResponseWriter, r *http.Request) {
-		cssContent, err := staticFiles.ReadFile("static/css/style.css")
-		if err != nil {
-			http.Error(w, "CSS file not found", http.StatusNotFound)
-			return
-		}
-		w.Header().Set("Content-Type", "text/css")
-		w.Write(cssContent)
-	})
+	r.HandleFunc("/static/css/style.css", cssHandler)
 
 	// Routes
 	r.HandleFunc("/", homeHandler).Methods("GET")

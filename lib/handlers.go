@@ -15,8 +15,14 @@ import (
 	"sync"
 )
 
-func cssHandler() {
-
+func cssHandler(w http.ResponseWriter, r *http.Request) {
+	cssContent, err := staticFiles.ReadFile("static/css/style.css")
+	if err != nil {
+		http.Error(w, "CSS file not found", http.StatusNotFound)
+		return
+	}
+	w.Header().Set("Content-Type", "text/css")
+	w.Write(cssContent)
 }
 
 func homeHandler(w http.ResponseWriter, r *http.Request) {
