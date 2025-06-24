@@ -38,3 +38,6 @@ A web-based SSH/SCP configuration management tool for deploying files and execut
 - **SSH Command**: Enter the command to execute on remote hosts
 - **SCP Target Directory**: Specify the destination directory for file uploads if necessary
 - **File Upload**: Select a file to transfer to all hosts if necessary
+
+### Download
+- Pre-compiled executable files can be found in `bin` directory 
