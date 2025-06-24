@@ -11,7 +11,7 @@ A web-based SSH/SCP configuration management tool for deploying files and execut
 
 ## Usage
 ### Startup options
-- listenAddr string, Server listen address (default *)
+- listenAddr string, Server listen address (default all)
 - listenPort int, Server listen port (default 8080)
 
 
@@ -19,7 +19,7 @@ A web-based SSH/SCP configuration management tool for deploying files and execut
 - Enter your SSH username and password in the configuration section
 
 ### 2. Import Destination Hosts
-- Prepare a JSON file containing your host configurations:
+- Prepare a JSON file containing your host configurations. A port value is optional:
 ```json
 [
   {
