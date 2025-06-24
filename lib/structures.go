@@ -4,6 +4,7 @@ import (
 	"embed"
 	"github.com/gorilla/websocket"
 	"net/http"
+	"sync"
 )
 
 // StartFlags application startup flags var
@@ -69,3 +70,7 @@ var upgrader = websocket.Upgrader{
 var destinations []Destination
 var uploadedFileName string
 var uploadedFilePath string
+
+// Handle progress messages
+var wsConnections []*websocket.Conn
+var connMutex sync.Mutex
