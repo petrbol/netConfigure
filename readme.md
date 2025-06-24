@@ -27,7 +27,7 @@ A web-based SSH/SCP configuration management tool for deploying files and execut
     "port": 22
   },
   {
-    "address": "server2.example.com",
+    "address": "192.168.1.101",
     "port": 2222
   }
 ]
