@@ -10,10 +10,13 @@ A web-based SSH/SCP configuration management tool for deploying files and execut
 - scp
 
 ## Usage
+### Run
+- Pre-compiled executable files can be found in `bin` directory
+- Execute binary file and open web page at http://localhost:8080
+
 ### Startup options
 - listenAddr string, Server listen address (default all)
 - listenPort int, Server listen port (default 8080)
-
 
 ### 1. Authentication
 - Enter your SSH username and password in the configuration section
@@ -38,6 +41,3 @@ A web-based SSH/SCP configuration management tool for deploying files and execut
 - **SSH Command**: Enter the command to execute on remote hosts
 - **SCP Target Directory**: Specify the destination directory for file uploads if necessary
 - **File Upload**: Select a file to transfer to all hosts if necessary
-
-### Download
-- Pre-compiled executable files can be found in `bin` directory 
