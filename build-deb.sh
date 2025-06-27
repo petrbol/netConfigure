@@ -108,8 +108,6 @@ Description=NetConfigure - Web frontend for netConfigure
 
 [Service]
 Type=simple
-User=www-data
-Group=www-data
 WorkingDirectory=/usr/share/$PACKAGE_NAME
 EnvironmentFile=/etc/default/$PACKAGE_NAME
 ExecStart=/usr/bin/$PACKAGE_NAME \
