@@ -10,9 +10,14 @@ A web-based SSH/SCP configuration management tool for deploying files and execut
 - scp
 
 ## Usage
+### Install
+- Manually: pre-compiled executable files can be found in `bin` directory
+- Package: debian `.deb` package can be found in `debian-pkg` directory, install using `dpkg -i package.deb`
+
 ### Run
-- Pre-compiled executable files can be found in `bin` directory
-- Execute binary file and open web page at http://localhost:8080
+- Manually: Execute binary file manually and open web page at http://localhost:8080
+- Systemd service: systemctl status/start/stop/disable/enable netconfigure.service
+- Systemd configuration file located in `/etc/default/netconfigure`
 
 ### Startup options
 - listenAddr string, Server listen address (default all)
