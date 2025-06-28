@@ -210,7 +210,12 @@
     let uploadedFile = '';
 
     function connectWebSocket() {
-        ws = new WebSocket('ws://localhost:8080/ws');
+        // Get the current host (includes hostname and port if present)
+        const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+        const host = window.location.host; // This includes both hostname and port
+        const wsUrl = `${protocol}//${host}/ws`;
+
+        ws = new WebSocket(wsUrl);
 
         ws.onmessage = function (event) {
             const data = JSON.parse(event.data);
