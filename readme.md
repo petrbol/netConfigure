@@ -47,7 +47,7 @@ A web-based SSH/SCP configuration management tool for deploying files and execut
 - **SCP Target Directory**: Specify the destination directory for file uploads if necessary
 - **File Upload**: Select a file to transfer to all hosts if necessary
 
-### Post-install tips
+## Post-install tips
 - App use web socket
 - Secure app access using apache/htaccess proxy example (destination address `10.10.20.38:8080`)
 ```
