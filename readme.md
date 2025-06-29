@@ -46,3 +46,45 @@ A web-based SSH/SCP configuration management tool for deploying files and execut
 - **SSH Command**: Enter the command to execute on remote hosts
 - **SCP Target Directory**: Specify the destination directory for file uploads if necessary
 - **File Upload**: Select a file to transfer to all hosts if necessary
+
+### Post-install tips
+- App use web socket
+- Secure app access using apache/nginx/htaccess proxy example (destination address `10.10.20.38:8080`)
+```
+<VirtualHost *:443>
+    ServerName XXXXXXXXXXXXXXXXXXx
+
+    <Location />
+        AuthType Basic
+        AuthName "Restricted Access"
+        AuthUserFile /etc/apache2/.htpasswd
+        Require valid-user
+    </Location>
+
+    # Enable proxy and preserve host
+    ProxyPreserveHost On
+    ProxyRequests Off
+    
+    # WebSocket proxy configuration
+    # This handles the WebSocket upgrade requests
+    ProxyPass /ws/ ws://10.10.20.38:8080/ws/
+    ProxyPassReverse /ws/ ws://10.10.20.38:8080/ws/
+
+    # HTTP proxy
+    ProxyPass / http://10.10.20.38:8080/
+    ProxyPassReverse / http://10.10.20.38:8080/
+    
+    # Rewrite rules for WebSocket
+    RewriteEngine On
+    RewriteCond %{HTTP:Upgrade} websocket [NC]
+    RewriteCond %{HTTP:Connection} upgrade [NC]
+    RewriteRule ^/?(.*) "ws://10.10.20.38:8080/$1" [P,L]
+    
+    ErrorLog ${APACHE_LOG_DIR}/error.log
+    CustomLog ${APACHE_LOG_DIR}/access.log combined
+SSLCertificateFile XXXXXXXXXXXXXXXXXXx
+SSLCertificateKeyFile XXXXXXXXXXXXXXXXXXx
+Include /etc/letsencrypt/options-ssl-apache.conf
+</VirtualHost>
+
+```
