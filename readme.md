@@ -49,7 +49,7 @@ A web-based SSH/SCP configuration management tool for deploying files and execut
 
 ### Post-install tips
 - App use web socket
-- Secure app access using apache/nginx/htaccess proxy example (destination address `10.10.20.38:8080`)
+- Secure app access using apache/htaccess proxy example (destination address `10.10.20.38:8080`)
 ```
 <VirtualHost *:443>
     ServerName XXXXXXXXXXXXXXXXXXx
