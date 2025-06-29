@@ -31,12 +31,14 @@ A web-based SSH/SCP configuration management tool for deploying files and execut
 ```json
 [
   {
-    "address": "192.168.1.100",
-    "port": 22
+    "address": "10.254.101.66",
+    "port": 22,
+    "display_name":"LocationA - device 01"
   },
   {
-    "address": "192.168.1.101",
-    "port": 2222
+    "address": "10.254.101.67",
+    "port": 22,
+    "display_name":"LocationA - device 02"
   }
 ]
 ```
@@ -48,8 +50,12 @@ A web-based SSH/SCP configuration management tool for deploying files and execut
 - **File Upload**: Select a file to transfer to all hosts if necessary
 
 ## Post-install tips
-- App use web socket
-- Secure app access using apache/htaccess proxy example (destination address `10.10.20.38:8080`)
+- Add RSA support for old devices, modify `/etc/ssh/ssh_config`
+```
+HostKeyAlgorithms = +ssh-rsa
+PubkeyAcceptedAlgorithms = +ssh-rsa
+```
+- Secure app access using apache/htaccess proxy example (destination address `10.10.20.38:8080`), App use web socket
 ```
 <VirtualHost *:443>
     ServerName XXXXXXXXXXXXXXXXXXx

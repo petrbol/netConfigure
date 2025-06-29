@@ -20,6 +20,7 @@ type FlagStruct struct {
 type Destination struct {
 	Address string `json:"address"`
 	Port    int    `json:"port"`
+	Name    string `json:"display_name"`
 }
 
 // TaskResult result of scp/ssh

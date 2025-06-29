@@ -162,7 +162,7 @@
                     <th>Host</th>
                     <th>Port</th>
                     <th></th>
-                    <th></th>
+                    <th>Display Name</th>
                 </tr>
                 </thead>
                 <tbody id="destinationTableBody">
@@ -311,7 +311,7 @@
                         <td>${d.address}</td>
                         <td>${d.port}</td>
                         <td></td>
-                        <td></td>
+                        <td>${d.display_name}</td>
                     </tr>`
             ).join('');
         }
@@ -349,6 +349,7 @@
         updateDestinationList();
         document.getElementById('configForm').reset();
         document.getElementById('commandForm').reset();
+        document.getElementById('configurationStatus').innerHTML = '';
         document.getElementById('destinationStatus').innerHTML = '';
         document.getElementById('fileStatus').innerHTML = '';
         document.getElementById('progressSection').classList.add('hidden');
