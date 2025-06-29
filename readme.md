@@ -66,7 +66,6 @@ A web-based SSH/SCP configuration management tool for deploying files and execut
     ProxyRequests Off
     
     # WebSocket proxy configuration
-    # This handles the WebSocket upgrade requests
     ProxyPass /ws/ ws://10.10.20.38:8080/ws/
     ProxyPassReverse /ws/ ws://10.10.20.38:8080/ws/
 
