@@ -6,7 +6,7 @@
 set -e
 
 # Default version if not provided
-VERSION=${1:-"0.0.2"}
+VERSION=${1:-"0.0.3"}
 PACKAGE_NAME="netconfigure"
 MAINTAINER="Petr Boltik <petr.boltik@gmail.com>"
 DESCRIPTION="Web frontend for SSH/SCP configuration tool"
