@@ -30,16 +30,9 @@ A web-based SSH/SCP configuration management tool for deploying files and execut
 - Prepare a JSON file containing your host configurations. A port value is optional:
 ```json
 [
-  {
-    "address": "10.254.101.66",
-    "port": 22,
-    "display_name":"LocationA - device 01"
-  },
-  {
-    "address": "10.254.101.67",
-    "port": 22,
-    "display_name":"LocationA - device 02"
-  }
+  "10.254.101.66:22",
+  "10.254.101.67:822",
+  "10.254.101.68"
 ]
 ```
 - Click "Upload File" to import your destination list

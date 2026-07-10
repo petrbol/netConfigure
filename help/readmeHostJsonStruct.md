@@ -1,7 +1,8 @@
-Accepted JSON struct:
+Accepted JSON struct example:
 ```
-type Destination struct {
-Address string `json:"address"`
-Port    int    `json:"port"`
-}
+[
+  "10.254.101.66:22",
+  "10.254.101.67:822",
+  "10.254.101.68"
+]
 ```
