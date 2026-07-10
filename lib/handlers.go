@@ -280,7 +280,7 @@ func executeHandler(w http.ResponseWriter, r *http.Request) {
 						"-o", "StrictHostKeyChecking=no",
 						"-O", //legacy mode
 						uploadedFilePath,
-						fmt.Sprintf("%s@%s:%s/", username, destination.Address, targetDir))
+						fmt.Sprintf("%s@%s:%s", username, destination.Address, targetDir))
 
 					scpOutput, scpErr := scpCmd.CombinedOutput()
 
