@@ -7,6 +7,7 @@ import (
 	"html/template"
 	"io"
 	"log"
+	"net"
 	"net/http"
 	"os"
 	"os/exec"
@@ -54,6 +55,7 @@ func homeHandler(w http.ResponseWriter, r *http.Request) {
 func uploadDestinationsHandler(w http.ResponseWriter, r *http.Request) {
 	file, _, err := r.FormFile("destinationFile")
 	if err != nil {
+		w.Header().Set("Content-Type", "application/json")
 		json.NewEncoder(w).Encode(map[string]interface{}{
 			"success": false,
 			"error":   "Failed to read file: " + err.Error(),
@@ -62,8 +64,9 @@ func uploadDestinationsHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	defer file.Close()
 
-	var newDestinations []Destination
-	if err := json.NewDecoder(file).Decode(&newDestinations); err != nil {
+	var addresses []string
+	if err := json.NewDecoder(file).Decode(&addresses); err != nil {
+		w.Header().Set("Content-Type", "application/json")
 		json.NewEncoder(w).Encode(map[string]interface{}{
 			"success": false,
 			"error":   "Failed to parse JSON: " + err.Error(),
@@ -71,14 +74,73 @@ func uploadDestinationsHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Set the default port if not specified
-	for i := range newDestinations {
-		if newDestinations[i].Port == 0 {
-			newDestinations[i].Port = 22
+	var newDestinations []Destination
+	for _, entry := range addresses {
+		host, portStr, err := net.SplitHostPort(entry)
+		port := 22
+		if err != nil {
+			host = entry
+		} else if p, err := strconv.Atoi(portStr); err == nil && p > 0 && p < 65536 {
+			port = p
 		}
+		newDestinations = append(newDestinations, Destination{
+			Address: host,
+			Port:    port,
+		})
 	}
 
 	destinations = newDestinations
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(map[string]interface{}{
+		"success":      true,
+		"destinations": destinations,
+	})
+}
+
+func addSingleDestinationHandler(w http.ResponseWriter, r *http.Request) {
+	address := r.FormValue("address")
+	portStr := r.FormValue("port")
+
+	w.Header().Set("Content-Type", "application/json")
+
+	if address == "" {
+		json.NewEncoder(w).Encode(map[string]interface{}{
+			"success": false,
+			"error":   "Address is required",
+		})
+		return
+	}
+
+	port := 22
+	if portStr != "" {
+		p, err := strconv.Atoi(portStr)
+		if err == nil && p > 0 && p < 65536 {
+			port = p
+		}
+	}
+
+	destinations = append(destinations, Destination{
+		Address: address,
+		Port:    port,
+	})
+
+	json.NewEncoder(w).Encode(map[string]interface{}{
+		"success":      true,
+		"destinations": destinations,
+	})
+}
+
+func removeDestinationHandler(w http.ResponseWriter, r *http.Request) {
+	address := r.FormValue("address")
+
+	for i, d := range destinations {
+		if d.Address == address {
+			destinations = append(destinations[:i], destinations[i+1:]...)
+			break
+		}
+	}
+
+	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(map[string]interface{}{
 		"success":      true,
 		"destinations": destinations,

@@ -19,6 +19,8 @@ func Start() {
 	// Routes
 	r.HandleFunc("/", homeHandler).Methods("GET")
 	r.HandleFunc("/upload-destinations", uploadDestinationsHandler).Methods("POST")
+	r.HandleFunc("/add-destination", addSingleDestinationHandler).Methods("POST")
+	r.HandleFunc("/remove-destination", removeDestinationHandler).Methods("POST")
 	r.HandleFunc("/upload-file", uploadFileHandler).Methods("POST")
 	r.HandleFunc("/execute", executeHandler).Methods("POST")
 	r.HandleFunc("/reset", resetHandler).Methods("POST")
